@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "mk.sln"
+    "dotnet.defaultSolution": "Le_Roux_Maxime_JV2_MarioKart.sln"
 }
