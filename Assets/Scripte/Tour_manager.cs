@@ -1,69 +1,87 @@
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections.Generic;
 
-public class PlayerCheckpointTracker : MonoBehaviour
+public class CheckpointManager : MonoBehaviour
 {
-    [Header("Paramètres")]
-    public List<GameObject> checkpoints;  // Liste manuelle OU auto-remplie
-    public int toursComplets = 0;
-    //public Text tourText;  // Optionnel : affichage UI
+    [Header("Checkpoints")]
+    public List<Transform> checkpoints = new List<Transform>();
+    private int currentIndex = 0;
+    private int lapCount = 0;
 
-    private int currentCheckpointIndex = 0;
+    [Header("Race Settings")]
+    public int totalLaps = 2;
+    public string playerTag = "Player";
 
-    void Start()
+    [Header("UI")]
+    public Text lapsText; // Assignez un objet UI Text dans l'inspecteur
+
+    private void Start()
     {
-        // Option 1 : Remplir automatiquement si les checkpoints ont un tag commun
-        if (checkpoints.Count == 0)
-        {
-            GameObject[] foundCheckpoints = GameObject.FindGameObjectsWithTag("Checkpoint");
-            // Trie par nom (ex: "Checkpoint1", "Checkpoint2"...)
-            System.Array.Sort(foundCheckpoints, (a, b) => a.name.CompareTo(b.name));
-            checkpoints = new List<GameObject>(foundCheckpoints);
-        }
-
-        //UpdateUI();
-        HighlightCurrentCheckpoint();
+        SetupCheckpoints();
+        UpdateLapsUI();
     }
 
-    void OnTriggerEnter(Collider other)
+    private void SetupCheckpoints()
     {
-        if (checkpoints.Count == 0) return;
-
-        // Si le joueur touche le bon checkpoint
-        if (other.gameObject == checkpoints[currentCheckpointIndex])
+        foreach (Transform cp in checkpoints)
         {
-            // Désactive le checkpoint (évite les retriggers)
-            other.enabled = false;
-
-            currentCheckpointIndex++;
-
-            // Tour complet
-            if (currentCheckpointIndex >= checkpoints.Count)
+            // Ajoute un collider trigger si absent
+            if (!cp.TryGetComponent<Collider>(out var collider))
             {
-                currentCheckpointIndex = 0;
-                toursComplets++;
-                Debug.Log($"Tour {toursComplets} complet !");
-                // Réactive tous les checkpoints pour le prochain tour
-                foreach (var cp in checkpoints) cp.SetActive(true);
+                collider = cp.gameObject.AddComponent<BoxCollider>();
             }
+            collider.isTrigger = true;
 
-            //UpdateUI();
-            HighlightCurrentCheckpoint();
+            // Ajoute le composant trigger
+            if (!cp.TryGetComponent<CheckpointTrigger>(out _))
+            {
+                var trigger = cp.gameObject.AddComponent<CheckpointTrigger>();
+                trigger.manager = this;
+            }
         }
     }
 
-    //void UpdateUI()
-    // {
-    //    if (tourText != null) tourText.text = "Tours: " + toursComplets;
-    //}
-
-    void HighlightCurrentCheckpoint()
+    public void PlayerPassedCheckpoint(Transform checkpoint)
     {
-        for (int i = 0; i < checkpoints.Count; i++)
+        if (checkpoints[currentIndex] == checkpoint)
         {
-            MeshRenderer renderer = checkpoints[i].GetComponent<MeshRenderer>();
-            if (renderer != null)
-                renderer.material.color = (i == currentCheckpointIndex) ? Color.green : Color.gray;
+            currentIndex++;
+            
+            if (currentIndex >= checkpoints.Count)
+            {
+                currentIndex = 0;
+                lapCount++;
+                UpdateLapsUI();
+                
+                if (lapCount > totalLaps)
+                {
+                    Debug.Log("Course terminée !");
+                    // Ajoutez ici la logique de fin de course
+                }
+            }
+        }
+    }
+
+    private void UpdateLapsUI()
+    {
+        if (lapsText != null)
+        {
+            lapsText.text = $"Tour: {lapCount}/{totalLaps}";
+        }
+    }
+}
+
+[RequireComponent(typeof(Collider))]
+public class CheckpointTrigger : MonoBehaviour
+{
+    [HideInInspector] public CheckpointManager manager;
+    
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag(manager.playerTag))
+        {
+            manager.PlayerPassedCheckpoint(transform);
         }
     }
 }
