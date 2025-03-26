@@ -1,4 +1,5 @@
 using UnityEngine;
+using TMPro;
 using System.Collections;
 
 public class KartController : MonoBehaviour
@@ -27,23 +28,165 @@ public class KartController : MonoBehaviour
     [SerializeField] private float _dirtSpeedMultiplier = 0.8f;
     [SerializeField] private float _iceSpeedMultiplier = 1.2f;
 
+    [Header("Countdown Settings")]
+    [SerializeField] private GameObject _countdownCanvas;
+    [SerializeField] private TextMeshProUGUI _countdownText;
+    [SerializeField] private TextMeshProUGUI _holdProgressText;
+    [SerializeField] private float _countdownDuration = 3f;
+    [SerializeField] private float _minHoldDuration = 1.0f;
+    [SerializeField] private float _perfectHoldMin = 1.5f;
+    [SerializeField] private float _perfectHoldMax = 2.5f;
+    [SerializeField] private float _penaltyDuration = 2f;
+    [SerializeField] private float _startBoostDuration = 2f;
+
     private float _speed;
     private float _accelerationLerpInterpolator;
     private bool _isAccelerating;
     private string _currentGroundType;
     private float _currentSpeedMultiplier = 1f;
     private bool _isSpinning;
+    private float _holdTimer = 0f;
+    private bool _isHoldingSpace = false;
+
+    private void Start()
+    {
+        if (_countdownCanvas != null)
+        {
+            _countdownCanvas.SetActive(false);
+            _holdProgressText.gameObject.SetActive(false);
+        }
+        
+        StartCoroutine(StartCountdown());
+    }
+
+    private IEnumerator StartCountdown()
+    {
+        _canMove = false;
+        _countdownCanvas.SetActive(true);
+        _holdProgressText.gameObject.SetActive(true);
+        _holdProgressText.text = "0%";
+
+        // Phase 1: Prêt?
+        _countdownText.text = "PRÊT?";
+        yield return new WaitForSeconds(1f);
+
+        // Réinitialisation du timer
+        _holdTimer = 0f;
+        _isHoldingSpace = false;
+
+        // Phase 2: 3...2...1
+        for (int i = 3; i > 0; i--)
+        {
+            _countdownText.text = i.ToString();
+            
+            // Vérification d'un départ anticipé (touche relâchée pendant le compte à rebours)
+            if (!_isHoldingSpace && Input.GetKeyDown(KeyCode.Space))
+            {
+                ApplyDamageEffect(DamageObject.DamageType.Banana, _penaltyDuration);
+                _countdownText.text = "TROP TOT!";
+                yield return new WaitForSeconds(_penaltyDuration);
+                _countdownCanvas.SetActive(false);
+                _holdProgressText.gameObject.SetActive(false);
+                _canMove = true;
+                yield break;
+            }
+            
+            yield return new WaitForSeconds(1f);
+        }
+
+        // Phase 3: Partez!
+        _countdownText.text = "PARTEZ!";
+        
+        // Évaluation finale de la durée d'appui
+        EvaluateHoldDuration();
+        
+        yield return new WaitForSeconds(0.5f);
+        _countdownCanvas.SetActive(false);
+        _holdProgressText.gameObject.SetActive(false);
+        _canMove = true;
+    }
 
     private void Update()
     {
-        if (!_canMove || _isSpinning) return;
-
-        HandleRotation();
-        HandleAcceleration();
-        HandleBoost();
-        DetectGround();
+        if (!_canMove)
+        {
+            HandleStartInput();
+        }
+        else if (!_isSpinning)
+        {
+            HandleRotation();
+            HandleAcceleration();
+            HandleBoost();
+            DetectGround();
+        }
     }
 
+    private void HandleStartInput()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            _isHoldingSpace = true;
+            _holdTimer = 0f;
+        }
+
+        if (Input.GetKeyUp(KeyCode.Space))
+        {
+            _isHoldingSpace = false;
+            _holdTimer = 0f;
+            _holdProgressText.text = "0%";
+        }
+
+        if (_isHoldingSpace)
+        {
+            _holdTimer += Time.deltaTime;
+            UpdateHoldProgressUI();
+        }
+    }
+
+    private void UpdateHoldProgressUI()
+    {
+        float progress = Mathf.Clamp01(_holdTimer / _perfectHoldMax);
+        _holdProgressText.text = $"{(progress * 100):F0}%";
+        
+        if (_holdTimer >= _perfectHoldMin && _holdTimer <= _perfectHoldMax)
+        {
+            _holdProgressText.color = Color.green;
+        }
+        else
+        {
+            _holdProgressText.color = Color.white;
+        }
+    }
+
+    private void EvaluateHoldDuration()
+    {
+        if (!_isHoldingSpace || _holdTimer < _minHoldDuration)
+        {
+            // Départ normal si pas d'appui ou temps trop court
+            _countdownText.text = "DÉPART!";
+            return;
+        }
+
+        if (_holdTimer >= _perfectHoldMin && _holdTimer <= _perfectHoldMax)
+        {
+            // Zone parfaite - boost
+            ApplyBoostEffect(BoostObject.BoostType.Normal, _startBoostDuration);
+            _countdownText.text = "PARFAIT!";
+        }
+        else if (_holdTimer > _perfectHoldMax)
+        {
+            // Trop long - pénalité
+            ApplyDamageEffect(DamageObject.DamageType.Oil, _penaltyDuration);
+            _countdownText.text = "TROP LONG!";
+        }
+        else
+        {
+            // Temps entre minHoldDuration et perfectHoldMin - départ normal
+            _countdownText.text = "DÉPART!";
+        }
+    }
+
+    // Toutes les autres méthodes existantes restent inchangées
     private void HandleRotation()
     {
         if (Input.GetKey(KeyCode.LeftArrow))
@@ -101,7 +244,7 @@ public class KartController : MonoBehaviour
 
         if (Physics.Raycast(_raycastOrigin.position, Vector3.down, out hit, _raycastDistance, _groundLayer))
         {
-            string groundTag = hit.collider.tag; // Déclaration de la variable manquante
+            string groundTag = hit.collider.tag;
             Debug.Log($"[SOL] Le kart roule sur: {groundTag} (Objet: {hit.collider.name})");
 
             if (groundTag == "Asphalt")
@@ -141,10 +284,8 @@ public class KartController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-    // Nouvelle méthode de détection qui évite l'erreur
         if (other.CompareTag("Boost"))
         {
-        // Récupère le composant seulement si le tag est bon
             BoostObject boost = other.GetComponent<BoostObject>();
             if (boost != null)
             {
@@ -153,13 +294,26 @@ public class KartController : MonoBehaviour
                 return;
             }
         }
+        if (other.CompareTag("BoostTerain"))
+        {
+            BoostObject boost = other.GetComponent<BoostObject>();
+            if (boost != null)
+            {
+                ApplyBoostEffect(boost.boostType, boost.boostDuration);
 
-        // Système de dégâts existant
+                return;
+            }
+        }
+
         DamageObject damage = other.GetComponent<DamageObject>();
         if (damage != null)
         {
             ApplyDamageEffect(damage.damageType, damage.slowdownDuration);
             Destroy(other.gameObject);
+        }
+        if (other.CompareTag("DamageTerain"))
+        {
+            ApplyDamageEffect(damage.damageType, damage.slowdownDuration);
         }
     }
 
@@ -198,17 +352,44 @@ public class KartController : MonoBehaviour
     public IEnumerator Boost(float boostAmount, float duration)
     {
         if (_isBoosting) yield break;
-
+    
         _isBoosting = true;
         float originalSpeed = _speedMax;
         _speedMax += boostAmount;
-        if (_boostParticles != null) _boostParticles.Play();
+    
+        // Sauvegarde l'état original et force l'accélération
+        bool wasAccelerating = _isAccelerating;
+        _isAccelerating = true;
+        _accelerationLerpInterpolator = 1f; // Accélération immédiate
+
+        if (_boostParticles != null)
+            _boostParticles.Play();
 
         if (!float.IsInfinity(duration))
         {
             yield return new WaitForSeconds(duration);
+        
+            // Restauration
             _speedMax = originalSpeed;
-            if (_boostParticles != null) _boostParticles.Stop();
+        
+            // Vérifie l'input actuel
+            bool isSpacePressed = Input.GetKey(KeyCode.Space);
+        
+            // Si le joueur n'appuie pas, désactive l'accélération
+            if (!isSpacePressed)
+            {
+                _isAccelerating = false;
+                _accelerationLerpInterpolator = 0f;
+            }
+            // Si le joueur appuie, garde l'accélération activée
+            else
+            {
+                _isAccelerating = true;
+            }
+        
+            if (_boostParticles != null)
+                _boostParticles.Stop();
+            
             _isBoosting = false;
         }
     }
