@@ -11,7 +11,7 @@ public class PlayerItemHandler : MonoBehaviour
     [SerializeField] private GameObject _greenShellPrefab;
     [SerializeField] private Transform _rearSpawnPoint; // Pour les bananes
     [SerializeField] private Transform _forwardSpawnPoint; // Pour les carapaces
-    [SerializeField] private float _shellForce = 20f;
+    [SerializeField] private float _shellForce = 50f;
 
     private ObjectData _currentItem;
 
@@ -60,7 +60,7 @@ public class PlayerItemHandler : MonoBehaviour
                 ThrowGreenShell();
                 break;
                 
-            case "Foudre":
+            case "bombe":
                 // Ajouter le système foudre ici
                 break;
         }

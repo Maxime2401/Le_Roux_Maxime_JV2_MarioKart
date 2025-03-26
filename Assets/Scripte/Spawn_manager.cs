@@ -1,56 +1,52 @@
 using UnityEngine;
-using Cinemachine; // N'oubliez pas d'ajouter cette directive
 
-public class RaceManager : MonoBehaviour
+public class PlayerCustomizer : MonoBehaviour
 {
-    [Header("Spawn")]
-    public Transform playerSpawnPoint;
-    public GameObject[] availableCharacters;
-    
-    [Header("Camera")]
-    public CinemachineVirtualCamera playerFollowCamera; // Assigner dans l'éditeur
+    [Header("Player Reference")]
+    [Tooltip("Référence à l'objet du joueur")]
+    public GameObject playerObject; // Assigner dans l'éditeur
+
+    [Header("Customization Options")]
+    public Mesh[] availableMeshes;
+    public Material[] availableMaterials;
 
     void Start()
     {
-        GameObject player = SpawnPlayer();
-        SetupCamera(player);
+        if (playerObject == null)
+        {
+            Debug.LogError("Player reference not set in PlayerCustomizer!");
+            return;
+        }
+
+        ApplyCustomization();
     }
 
-    GameObject SpawnPlayer()
+    void ApplyCustomization()
     {
-        int index = BoutonsPersos.selectedCharacterIndex;
+        int selectedIndex = BoutonsPersos.selectedCharacterIndex;
         
-        if (index >= 0 && index < availableCharacters.Length)
+        // Vérification des index
+        if (selectedIndex < 0 || 
+            selectedIndex >= availableMeshes.Length || 
+            selectedIndex >= availableMaterials.Length)
         {
-            GameObject player = Instantiate(
-                availableCharacters[index], 
-                playerSpawnPoint.position, 
-                playerSpawnPoint.rotation
-            );
-            return player;
+            Debug.LogWarning("Invalid selection index, using default (0)");
+            selectedIndex = 0;
         }
-        
-        Debug.LogError("Index invalide - chargement par défaut");
-        return Instantiate(availableCharacters[0], playerSpawnPoint.position, playerSpawnPoint.rotation);
-    }
 
-    void SetupCamera(GameObject player)
-    {
-        if (playerFollowCamera != null && player != null)
+        // Récupération des composants
+        MeshFilter meshFilter = playerObject.GetComponentInChildren<MeshFilter>();
+        Renderer renderer = playerObject.GetComponentInChildren<Renderer>();
+
+        // Application des changements
+        if (meshFilter != null && availableMeshes.Length > 0)
         {
-            playerFollowCamera.Follow = player.transform;
-            playerFollowCamera.LookAt = player.transform;
-            
-            // Option: Configurer dynamiquement pour un 3rd person shooter
-            var transposer = playerFollowCamera.GetCinemachineComponent<CinemachineTransposer>();
-            if (transposer != null)
-            {
-                transposer.m_FollowOffset = new Vector3(0, 2, -4); // Vue en 3ème personne
-            }
+            meshFilter.mesh = availableMeshes[selectedIndex];
         }
-        else
+
+        if (renderer != null && availableMaterials.Length > 0)
         {
-            Debug.LogError("Camera ou joueur non assigné!");
+            renderer.material = availableMaterials[selectedIndex];
         }
     }
 }

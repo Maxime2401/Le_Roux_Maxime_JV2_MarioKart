@@ -45,6 +45,7 @@ GameObject:
   - component: {fileID: 5154867698380960564}
   - component: {fileID: 3916645845405490972}
   - component: {fileID: 3441260460678856375}
+  - component: {fileID: 7545618492472839378}
   m_Layer: 0
   m_Name: capibara
   m_TagString: Player
@@ -226,6 +227,22 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 80
   m_CollisionDetection: 0
+--- !u!114 &7545618492472839378
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 948529157460848939}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: feb2c0dfeec18eb47877ca589acca526, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  checkpoints:
+  - {fileID: 0}
+  - {fileID: 0}
+  toursComplets: 0
 --- !u!1 &5840080946360943363
 GameObject:
   m_ObjectHideFlags: 0
