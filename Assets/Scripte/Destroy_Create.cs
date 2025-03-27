@@ -3,47 +3,63 @@ using UnityEngine;
 public class DestructibleCrate : MonoBehaviour
 {
     [Header("Item Settings")]
-    [SerializeField] private ObjectData[] _possibleItems; // Liste des objets possibles
+    [SerializeField] private ObjectData[] possibleItems;
+    [SerializeField] private float itemGiveRadius = 3f;
 
     [Header("Destruction Settings")]
-    [SerializeField] private GameObject _destroyEffect; // Effet visuel lors de la destruction
-    [SerializeField] private float _destroyDelay = 0.5f; // Délai avant la destruction de l'objet
-    [SerializeField] private string _playerTag = "Player"; // Tag pour détecter le joueur
+    [SerializeField] private GameObject destroyEffect;
+    [SerializeField] private float destroyDelay = 0.5f;
+    [SerializeField] private string playerTag = "Player";
 
     private void OnTriggerEnter(Collider other)
     {
-        // Vérifie si l'objet entrant en collision est le joueur
-        if (other.CompareTag(_playerTag))
+        if (other.CompareTag(playerTag))
         {
-            DestroyCrate();
+            DestroyCrate(other.transform);
         }
     }
 
-    public void DestroyCrate()
+    public void DestroyCrate(Transform hittingPlayer)
     {
-        // Applique l'effet visuel de destruction
-        if (_destroyEffect != null)
+        // Effet visuel
+        if (destroyEffect != null)
         {
-            Instantiate(_destroyEffect, transform.position, transform.rotation);
+            Instantiate(destroyEffect, transform.position, Quaternion.identity);
         }
 
-        // Donne un objet aléatoire au joueur
-        if (_possibleItems.Length > 0)
+        // Donne un objet aléatoire
+        if (possibleItems.Length > 0)
         {
-            ObjectData randomItem = _possibleItems[Random.Range(0, _possibleItems.Length)];
-            GiveItemToPlayer(randomItem);
+            GiveItemToPlayer(hittingPlayer, possibleItems[Random.Range(0, possibleItems.Length)]);
         }
 
-        // Détruit la caisse après un délai
-        Destroy(gameObject, _destroyDelay);
+        Destroy(gameObject, destroyDelay);
     }
 
-    private void GiveItemToPlayer(ObjectData itemData)
+    private void GiveItemToPlayer(Transform playerTransform, ObjectData itemData)
     {
-        PlayerItemHandler playerItemHandler = FindObjectOfType<PlayerItemHandler>();
-        if (playerItemHandler != null)
+        // Option 1: Le joueur qui a cassé la caisse
+        if (playerTransform.TryGetComponent<PlayerItemHandler>(out var handler) || 
+           (handler = playerTransform.GetComponentInParent<PlayerItemHandler>()) != null)
         {
-            playerItemHandler.SetCurrentItem(itemData);
+            handler.SetCurrentItem(itemData);
+            return;
         }
+
+        // Option 2: Trouve le joueur le plus proche
+        PlayerItemHandler nearestHandler = null;
+        float minDistance = Mathf.Infinity;
+
+        foreach (var player in FindObjectsOfType<PlayerItemHandler>())
+        {
+            float distance = Vector3.Distance(transform.position, player.transform.position);
+            if (distance < minDistance && distance <= itemGiveRadius)
+            {
+                minDistance = distance;
+                nearestHandler = player;
+            }
+        }
+
+        nearestHandler?.SetCurrentItem(itemData);
     }
 }

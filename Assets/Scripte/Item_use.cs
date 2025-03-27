@@ -3,21 +3,34 @@ using UnityEngine.UI;
 
 public class PlayerItemHandler : MonoBehaviour
 {
+    [Header("Player Settings")]
+    [SerializeField] private int playerNumber = 1; // 1 ou 2
+    [SerializeField] private KeyCode useItemKey = KeyCode.E; // Configurable dans l'inspecteur
+
     [Header("UI Settings")]
-    [SerializeField] private Image _itemIconUI;
+    [SerializeField] private Image itemIconUI;
     
     [Header("Item Settings")]
-    [SerializeField] private GameObject _bananaPrefab;
-    [SerializeField] private GameObject _greenShellPrefab;
-    [SerializeField] private Transform _rearSpawnPoint; // Pour les bananes
-    [SerializeField] private Transform _forwardSpawnPoint; // Pour les carapaces
-    [SerializeField] private float _shellForce = 50f;
+    [SerializeField] private GameObject bananaPrefab;
+    [SerializeField] private GameObject greenShellPrefab;
+    [SerializeField] private Transform rearSpawnPoint;
+    [SerializeField] private Transform forwardSpawnPoint;
+    [SerializeField] private float shellForce = 50f;
 
-    private ObjectData _currentItem;
+    private ObjectData currentItem;
+
+    private void Awake()
+    {
+        // Configuration automatique si non défini
+        if (playerNumber == 2 && useItemKey == KeyCode.E)
+        {
+            useItemKey = KeyCode.RightShift;
+        }
+    }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.E) && _currentItem != null)
+        if (Input.GetKeyDown(useItemKey) && currentItem != null)
         {
             UseCurrentItem();
         }
@@ -25,26 +38,22 @@ public class PlayerItemHandler : MonoBehaviour
 
     public void SetCurrentItem(ObjectData itemData)
     {
-        _currentItem = itemData;
+        currentItem = itemData;
 
-        if (_itemIconUI != null)
+        if (itemIconUI != null)
         {
-            _itemIconUI.sprite = itemData.itemIcon;
-            _itemIconUI.enabled = true;
+            itemIconUI.sprite = itemData.itemIcon;
+            itemIconUI.enabled = true;
         }
     }
 
     private void UseCurrentItem()
     {
-        if (_currentItem != null)
+        if (currentItem != null)
         {
-            ApplyItemEffect(_currentItem);
-            _currentItem = null;
-
-            if (_itemIconUI != null)
-            {
-                _itemIconUI.enabled = false;
-            }
+            ApplyItemEffect(currentItem);
+            currentItem = null;
+            if (itemIconUI != null) itemIconUI.enabled = false;
         }
     }
 
@@ -55,35 +64,29 @@ public class PlayerItemHandler : MonoBehaviour
             case "Banane":
                 SpawnBanana();
                 break;
-                
             case "Vert":
                 ThrowGreenShell();
                 break;
-                
             case "bombe":
-                // Ajouter le système foudre ici
+                // Implémentez la bombe ici
                 break;
         }
     }
 
     private void SpawnBanana()
     {
-        if (_bananaPrefab == null || _rearSpawnPoint == null) return;
-        Instantiate(_bananaPrefab, _rearSpawnPoint.position, _rearSpawnPoint.rotation);
+        if (bananaPrefab != null && rearSpawnPoint != null)
+            Instantiate(bananaPrefab, rearSpawnPoint.position, rearSpawnPoint.rotation);
     }
 
     private void ThrowGreenShell()
     {
-        if (_greenShellPrefab == null || _forwardSpawnPoint == null) return;
+        if (greenShellPrefab == null || forwardSpawnPoint == null) return;
         
-        GameObject shell = Instantiate(_greenShellPrefab, 
-                                    _forwardSpawnPoint.position, 
-                                    _forwardSpawnPoint.rotation);
-        
-        Rigidbody rb = shell.GetComponent<Rigidbody>();
-        if (rb != null)
+        GameObject shell = Instantiate(greenShellPrefab, forwardSpawnPoint.position, forwardSpawnPoint.rotation);
+        if (shell.TryGetComponent<Rigidbody>(out var rb))
         {
-            rb.AddForce(_forwardSpawnPoint.forward * _shellForce, ForceMode.Impulse);
+            rb.AddForce(forwardSpawnPoint.forward * shellForce, ForceMode.Impulse);
         }
     }
 }
