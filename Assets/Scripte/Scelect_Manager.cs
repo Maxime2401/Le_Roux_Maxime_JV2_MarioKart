@@ -11,8 +11,10 @@ public class BoutonsPersos : MonoBehaviour
     public Button boutonCommencer;
     public string sceneDeCourse = "Course";
 
-    // Nouveau: Sauvegarde l'INDEX du perso sélectionné
-    public static int selectedCharacterIndex = -1;
+    // Modifié pour 2 joueurs
+    public static int[] selectedCharacterIndices = new int[2] { -1, -1 };
+    private int currentPlayerSelecting = 0; // 0 = Joueur 1, 1 = Joueur 2
+    public Text selectionText;
 
     void Start()
     {
@@ -25,6 +27,8 @@ public class BoutonsPersos : MonoBehaviour
 
         boutonCommencer.interactable = false;
         boutonCommencer.onClick.AddListener(ChangerScene);
+        
+        UpdateSelectionUI();
     }
 
     void SelectionnerPerso(int index)
@@ -33,9 +37,25 @@ public class BoutonsPersos : MonoBehaviour
         foreach (Transform child in spawnPoint) Destroy(child.gameObject);
         Instantiate(modelesPersos[index], spawnPoint.position, Quaternion.identity, spawnPoint);
 
-        // Sauvegarde l'INDEX au lieu du nom
-        selectedCharacterIndex = index;
-        boutonCommencer.interactable = true;
+        // Sauvegarde l'INDEX pour le joueur actuel
+        selectedCharacterIndices[currentPlayerSelecting] = index;
+        
+        // Passe au joueur suivant ou active le bouton Commencer
+        if (currentPlayerSelecting < 1)
+        {
+            currentPlayerSelecting++;
+            UpdateSelectionUI();
+        }
+        else
+        {
+            boutonCommencer.interactable = true;
+            selectionText.text = "Prêt à commencer!";
+        }
+    }
+
+    void UpdateSelectionUI()
+    {
+        selectionText.text = $"Joueur {currentPlayerSelecting + 1}, sélectionnez votre personnage";
     }
 
     void Update()
@@ -47,7 +67,7 @@ public class BoutonsPersos : MonoBehaviour
 
     void ChangerScene()
     {
-        if (selectedCharacterIndex >= 0)
+        if (selectedCharacterIndices[0] >= 0 && selectedCharacterIndices[1] >= 0)
             SceneManager.LoadScene(sceneDeCourse);
     }
 }

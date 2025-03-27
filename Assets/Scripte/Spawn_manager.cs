@@ -6,6 +6,9 @@ public class PlayerCustomizer : MonoBehaviour
     [Tooltip("Référence à l'objet du joueur")]
     public GameObject playerObject; // Assigner dans l'éditeur
 
+    [Header("Player Index (0 = Joueur 1, 1 = Joueur 2)")]
+    public int playerIndex = 0;
+
     [Header("Customization Options")]
     public Mesh[] availableMeshes;
     public Material[] availableMaterials;
@@ -23,7 +26,7 @@ public class PlayerCustomizer : MonoBehaviour
 
     void ApplyCustomization()
     {
-        int selectedIndex = BoutonsPersos.selectedCharacterIndex;
+        int selectedIndex = BoutonsPersos.selectedCharacterIndices[playerIndex];
         
         // Vérification des index
         if (selectedIndex < 0 || 

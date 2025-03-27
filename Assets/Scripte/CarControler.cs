@@ -4,56 +4,89 @@ using System.Collections;
 
 public class KartController : MonoBehaviour
 {
+    [Header("Player Settings")]
+    [SerializeField] private int playerNumber = 1; // 1 ou 2
+
     [Header("Movement Settings")]
-    [SerializeField] private Rigidbody _rb;
-    [SerializeField] private float _speedMax = 3f;
-    [SerializeField] private float _accelerationFactor = 0.1f;
-    [SerializeField] private float _rotationSpeed = 0.5f;
-    [SerializeField] private AnimationCurve _accelerationCurve;
-    [SerializeField] private bool _canMove = true;
+    [SerializeField] private Rigidbody rb;
+    [SerializeField] private float speedMax = 3f;
+    [SerializeField] private float accelerationFactor = 0.1f;
+    [SerializeField] private float rotationSpeed = 0.5f;
+    [SerializeField] private AnimationCurve accelerationCurve;
+    [SerializeField] private bool canMove = true;
 
     [Header("Boost Settings")]
-    [SerializeField] private float _normalBoostAmount = 10f;
-    [SerializeField] private float _superBoostAmount = 15f;
-    [SerializeField] private float _boostDuration = 2f;
-    [SerializeField] private ParticleSystem _boostParticles;
-    private bool _isBoosting;
+    [SerializeField] private float normalBoostAmount = 10f;
+    [SerializeField] private float superBoostAmount = 15f;
+    [SerializeField] private float boostDuration = 2f;
+    [SerializeField] private ParticleSystem boostParticles;
+    private bool isBoosting;
 
     [Header("Ground Detection Settings")]
-    [SerializeField] private float _raycastDistance = 1f;
-    [SerializeField] private LayerMask _groundLayer;
-    [SerializeField] private Transform _raycastOrigin;
-    [SerializeField] private float _asphaltSpeedMultiplier = 1f;
-    [SerializeField] private float _grassSpeedMultiplier = 0.7f;
-    [SerializeField] private float _dirtSpeedMultiplier = 0.8f;
-    [SerializeField] private float _iceSpeedMultiplier = 1.2f;
+    [SerializeField] private float raycastDistance = 1f;
+    [SerializeField] private LayerMask groundLayer;
+    [SerializeField] private Transform raycastOrigin;
+    [SerializeField] private float asphaltSpeedMultiplier = 1f;
+    [SerializeField] private float grassSpeedMultiplier = 0.7f;
+    [SerializeField] private float dirtSpeedMultiplier = 0.8f;
+    [SerializeField] private float iceSpeedMultiplier = 1.2f;
 
     [Header("Countdown Settings")]
-    [SerializeField] private GameObject _countdownCanvas;
-    [SerializeField] private TextMeshProUGUI _countdownText;
-    [SerializeField] private TextMeshProUGUI _holdProgressText;
-    [SerializeField] private float _countdownDuration = 3f;
-    [SerializeField] private float _minHoldDuration = 1.0f;
-    [SerializeField] private float _perfectHoldMin = 1.5f;
-    [SerializeField] private float _perfectHoldMax = 2.5f;
-    [SerializeField] private float _penaltyDuration = 2f;
-    [SerializeField] private float _startBoostDuration = 2f;
+    [SerializeField] private GameObject countdownCanvas;
+    [SerializeField] private TextMeshProUGUI countdownText;
+    [SerializeField] private TextMeshProUGUI holdProgressText;
+    [SerializeField] private float countdownDuration = 3f;
+    [SerializeField] private float minHoldDuration = 1.0f;
+    [SerializeField] private float perfectHoldMin = 1.5f;
+    [SerializeField] private float perfectHoldMax = 2.5f;
+    [SerializeField] private float penaltyDuration = 2f;
+    [SerializeField] private float startBoostDuration = 2f;
 
-    private float _speed;
-    private float _accelerationLerpInterpolator;
-    private bool _isAccelerating;
-    private string _currentGroundType;
-    private float _currentSpeedMultiplier = 1f;
-    private bool _isSpinning;
-    private float _holdTimer = 0f;
-    private bool _isHoldingSpace = false;
+    private float speed;
+    private float accelerationLerpInterpolator;
+    private bool isAccelerating;
+    private string currentGroundType;
+    private float currentSpeedMultiplier = 1f;
+    private bool isSpinning;
+    private float holdTimer = 0f;
+    private bool isHoldingStart = false;
+
+    // Contrôles par joueur
+    private string horizontalInput;
+    private string verticalInput;
+    private KeyCode accelerateKey;
+    private KeyCode boostKey;
+    private KeyCode startKey;
+
+    private void Awake()
+    {
+        ConfigureControls();
+    }
+
+    private void ConfigureControls()
+    {
+        if (playerNumber == 1)
+        {
+            horizontalInput = "Horizontal_P1";
+            verticalInput = "Vertical_P1";
+            accelerateKey = KeyCode.UpArrow;
+            startKey = KeyCode.UpArrow;
+        }
+        else // Joueur 2
+        {
+            horizontalInput = "Horizontal_P2";
+            verticalInput = "Vertical_P2";
+            accelerateKey = KeyCode.W;
+            startKey = KeyCode.W;
+        }
+    }
 
     private void Start()
     {
-        if (_countdownCanvas != null)
+        if (countdownCanvas != null)
         {
-            _countdownCanvas.SetActive(false);
-            _holdProgressText.gameObject.SetActive(false);
+            countdownCanvas.SetActive(false);
+            holdProgressText.gameObject.SetActive(false);
         }
         
         StartCoroutine(StartCountdown());
@@ -61,33 +94,33 @@ public class KartController : MonoBehaviour
 
     private IEnumerator StartCountdown()
     {
-        _canMove = false;
-        _countdownCanvas.SetActive(true);
-        _holdProgressText.gameObject.SetActive(true);
-        _holdProgressText.text = "0%";
+        canMove = false;
+        countdownCanvas.SetActive(true);
+        holdProgressText.gameObject.SetActive(true);
+        holdProgressText.text = "0%";
 
         // Phase 1: Prêt?
-        _countdownText.text = "PRÊT?";
+        countdownText.text = "PRÊT?";
         yield return new WaitForSeconds(1f);
 
         // Réinitialisation du timer
-        _holdTimer = 0f;
-        _isHoldingSpace = false;
+        holdTimer = 0f;
+        isHoldingStart = false;
 
         // Phase 2: 3...2...1
         for (int i = 3; i > 0; i--)
         {
-            _countdownText.text = i.ToString();
+            countdownText.text = i.ToString();
             
-            // Vérification d'un départ anticipé (touche relâchée pendant le compte à rebours)
-            if (!_isHoldingSpace && Input.GetKeyDown(KeyCode.Space))
+            // Vérification d'un départ anticipé
+            if (!isHoldingStart && Input.GetKeyDown(startKey))
             {
-                ApplyDamageEffect(DamageObject.DamageType.Banana, _penaltyDuration);
-                _countdownText.text = "TROP TOT!";
-                yield return new WaitForSeconds(_penaltyDuration);
-                _countdownCanvas.SetActive(false);
-                _holdProgressText.gameObject.SetActive(false);
-                _canMove = true;
+                ApplyDamageEffect(DamageObject.DamageType.Banana, penaltyDuration);
+                countdownText.text = "TROP TOT!";
+                yield return new WaitForSeconds(penaltyDuration);
+                countdownCanvas.SetActive(false);
+                holdProgressText.gameObject.SetActive(false);
+                canMove = true;
                 yield break;
             }
             
@@ -95,130 +128,107 @@ public class KartController : MonoBehaviour
         }
 
         // Phase 3: Partez!
-        _countdownText.text = "PARTEZ!";
-        
-        // Évaluation finale de la durée d'appui
+        countdownText.text = "PARTEZ!";
         EvaluateHoldDuration();
         
         yield return new WaitForSeconds(0.5f);
-        _countdownCanvas.SetActive(false);
-        _holdProgressText.gameObject.SetActive(false);
-        _canMove = true;
+        countdownCanvas.SetActive(false);
+        holdProgressText.gameObject.SetActive(false);
+        canMove = true;
     }
 
     private void Update()
     {
-        if (!_canMove)
+        if (!canMove)
         {
             HandleStartInput();
         }
-        else if (!_isSpinning)
+        else if (!isSpinning)
         {
             HandleRotation();
             HandleAcceleration();
-            HandleBoost();
             DetectGround();
         }
     }
 
     private void HandleStartInput()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(startKey))
         {
-            _isHoldingSpace = true;
-            _holdTimer = 0f;
+            isHoldingStart = true;
+            holdTimer = 0f;
         }
 
-        if (Input.GetKeyUp(KeyCode.Space))
+        if (Input.GetKeyUp(startKey))
         {
-            _isHoldingSpace = false;
-            _holdTimer = 0f;
-            _holdProgressText.text = "0%";
+            isHoldingStart = false;
+            holdTimer = 0f;
+            holdProgressText.text = "0%";
         }
 
-        if (_isHoldingSpace)
+        if (isHoldingStart)
         {
-            _holdTimer += Time.deltaTime;
+            holdTimer += Time.deltaTime;
             UpdateHoldProgressUI();
         }
     }
 
     private void UpdateHoldProgressUI()
     {
-        float progress = Mathf.Clamp01(_holdTimer / _perfectHoldMax);
-        _holdProgressText.text = $"{(progress * 100):F0}%";
+        float progress = Mathf.Clamp01(holdTimer / perfectHoldMax);
+        holdProgressText.text = $"{(progress * 100):F0}%";
         
-        if (_holdTimer >= _perfectHoldMin && _holdTimer <= _perfectHoldMax)
+        if (holdTimer >= perfectHoldMin && holdTimer <= perfectHoldMax)
         {
-            _holdProgressText.color = Color.green;
+            holdProgressText.color = Color.green;
         }
         else
         {
-            _holdProgressText.color = Color.white;
+            holdProgressText.color = Color.white;
         }
     }
 
     private void EvaluateHoldDuration()
     {
-        if (!_isHoldingSpace || _holdTimer < _minHoldDuration)
+        if (!isHoldingStart || holdTimer < minHoldDuration)
         {
-            // Départ normal si pas d'appui ou temps trop court
-            _countdownText.text = "DÉPART!";
+            countdownText.text = "DÉPART!";
             return;
         }
 
-        if (_holdTimer >= _perfectHoldMin && _holdTimer <= _perfectHoldMax)
+        if (holdTimer >= perfectHoldMin && holdTimer <= perfectHoldMax)
         {
-            // Zone parfaite - boost
-            ApplyBoostEffect(BoostObject.BoostType.Normal, _startBoostDuration);
-            _countdownText.text = "PARFAIT!";
+            ApplyBoostEffect(BoostObject.BoostType.Normal, startBoostDuration);
+            countdownText.text = "PARFAIT!";
         }
-        else if (_holdTimer > _perfectHoldMax)
+        else if (holdTimer > perfectHoldMax)
         {
-            // Trop long - pénalité
-            ApplyDamageEffect(DamageObject.DamageType.Oil, _penaltyDuration);
-            _countdownText.text = "TROP LONG!";
+            ApplyDamageEffect(DamageObject.DamageType.Oil, penaltyDuration);
+            countdownText.text = "TROP LONG!";
         }
         else
         {
-            // Temps entre minHoldDuration et perfectHoldMin - départ normal
-            _countdownText.text = "DÉPART!";
+            countdownText.text = "DÉPART!";
         }
     }
 
-    // Toutes les autres méthodes existantes restent inchangées
     private void HandleRotation()
     {
-        if (Input.GetKey(KeyCode.LeftArrow))
-        {
-            transform.Rotate(Vector3.down, _rotationSpeed * Time.deltaTime);
-        }
-        if (Input.GetKey(KeyCode.RightArrow))
-        {
-            transform.Rotate(Vector3.up, _rotationSpeed * Time.deltaTime);
-        }
+        float horizontal = Input.GetAxis(horizontalInput);
+        transform.Rotate(Vector3.up, horizontal * rotationSpeed * Time.deltaTime);
     }
 
     private void HandleAcceleration()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(accelerateKey))
         {
-            _isAccelerating = true;
+            isAccelerating = true;
         }
-        if (Input.GetKeyUp(KeyCode.Space))
+        if (Input.GetKeyUp(accelerateKey))
         {
-            _isAccelerating = false;
-        }
-    }
-
-    private void HandleBoost()
-    {
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            StartCoroutine(Boost(_normalBoostAmount, _boostDuration));
+            isAccelerating = false;
         }
     }
-
     private void FixedUpdate()
     {
         UpdateAcceleration();
@@ -227,58 +237,49 @@ public class KartController : MonoBehaviour
 
     private void UpdateAcceleration()
     {
-        _accelerationLerpInterpolator += _isAccelerating ? _accelerationFactor : -_accelerationFactor * 2;
-        _accelerationLerpInterpolator = Mathf.Clamp01(_accelerationLerpInterpolator);
-        _speed = _accelerationCurve.Evaluate(_accelerationLerpInterpolator) * _speedMax * _currentSpeedMultiplier;
+        accelerationLerpInterpolator += isAccelerating ? accelerationFactor : -accelerationFactor * 2;
+        accelerationLerpInterpolator = Mathf.Clamp01(accelerationLerpInterpolator);
+        speed = accelerationCurve.Evaluate(accelerationLerpInterpolator) * speedMax * currentSpeedMultiplier;
     }
 
     private void MoveCar()
     {
-        _rb.MovePosition(transform.position + transform.forward * _speed * Time.fixedDeltaTime);
+        rb.MovePosition(transform.position + transform.forward * speed * Time.fixedDeltaTime);
     }
 
     private void DetectGround()
     {
         RaycastHit hit;
-        Debug.DrawRay(_raycastOrigin.position, Vector3.down * _raycastDistance, Color.red);
-
-        if (Physics.Raycast(_raycastOrigin.position, Vector3.down, out hit, _raycastDistance, _groundLayer))
+        if (Physics.Raycast(raycastOrigin.position, Vector3.down, out hit, raycastDistance, groundLayer))
         {
-            string groundTag = hit.collider.tag;
-            Debug.Log($"[SOL] Le kart roule sur: {groundTag} (Objet: {hit.collider.name})");
-
-            if (groundTag == "Asphalt")
+            switch (hit.collider.tag)
             {
-                _currentGroundType = "Asphalt";
-                _currentSpeedMultiplier = _asphaltSpeedMultiplier;
-            }
-            else if (groundTag == "Grass")
-            {
-                _currentGroundType = "Grass";
-                _currentSpeedMultiplier = _grassSpeedMultiplier;
-            }
-            else if (groundTag == "Dirt")
-            {
-                _currentGroundType = "Dirt";
-                _currentSpeedMultiplier = _dirtSpeedMultiplier;
-            }
-            else if (groundTag == "Ice")
-            {
-                _currentGroundType = "Ice";
-                _currentSpeedMultiplier = _iceSpeedMultiplier;
-            }
-            else
-            {
-                _currentGroundType = "Default";
-                _currentSpeedMultiplier = 1f;
-                Debug.LogWarning($"[SOL] Tag non reconnu: {groundTag} sur l'objet {hit.collider.name}");
+                case "Asphalt":
+                    currentGroundType = "Asphalt";
+                    currentSpeedMultiplier = asphaltSpeedMultiplier;
+                    break;
+                case "Grass":
+                    currentGroundType = "Grass";
+                    currentSpeedMultiplier = grassSpeedMultiplier;
+                    break;
+                case "Dirt":
+                    currentGroundType = "Dirt";
+                    currentSpeedMultiplier = dirtSpeedMultiplier;
+                    break;
+                case "Ice":
+                    currentGroundType = "Ice";
+                    currentSpeedMultiplier = iceSpeedMultiplier;
+                    break;
+                default:
+                    currentGroundType = "Default";
+                    currentSpeedMultiplier = 1f;
+                    break;
             }
         }
         else
         {
-            _currentGroundType = "Default";
-            _currentSpeedMultiplier = 1f;
-            Debug.Log("[SOL] Aucun sol détecté sous le kart");
+            currentGroundType = "Default";
+            currentSpeedMultiplier = 1f;
         }
     }
 
@@ -291,29 +292,27 @@ public class KartController : MonoBehaviour
             {
                 ApplyBoostEffect(boost.boostType, boost.boostDuration);
                 Destroy(other.gameObject);
-                return;
             }
         }
-        if (other.CompareTag("BoostTerain"))
+        else if (other.CompareTag("BoostTerain"))
         {
             BoostObject boost = other.GetComponent<BoostObject>();
             if (boost != null)
             {
                 ApplyBoostEffect(boost.boostType, boost.boostDuration);
-
-                return;
             }
         }
-
-        DamageObject damage = other.GetComponent<DamageObject>();
-        if (damage != null)
+        else
         {
-            ApplyDamageEffect(damage.damageType, damage.slowdownDuration);
-            Destroy(other.gameObject);
-        }
-        if (other.CompareTag("DamageTerain"))
-        {
-            ApplyDamageEffect(damage.damageType, damage.slowdownDuration);
+            DamageObject damage = other.GetComponent<DamageObject>();
+            if (damage != null)
+            {
+                ApplyDamageEffect(damage.damageType, damage.slowdownDuration);
+                if (!other.CompareTag("DamageTerain"))
+                {
+                    Destroy(other.gameObject);
+                }
+            }
         }
     }
 
@@ -322,13 +321,13 @@ public class KartController : MonoBehaviour
         switch (boostType)
         {
             case BoostObject.BoostType.Normal:
-                StartCoroutine(Boost(_normalBoostAmount, duration));
+                StartCoroutine(Boost(normalBoostAmount, duration));
                 break;
             case BoostObject.BoostType.Super:
-                StartCoroutine(Boost(_superBoostAmount, duration));
+                StartCoroutine(Boost(superBoostAmount, duration));
                 break;
             case BoostObject.BoostType.Infinite:
-                StartCoroutine(Boost(_normalBoostAmount, Mathf.Infinity));
+                StartCoroutine(Boost(normalBoostAmount, Mathf.Infinity));
                 break;
         }
     }
@@ -351,54 +350,38 @@ public class KartController : MonoBehaviour
 
     public IEnumerator Boost(float boostAmount, float duration)
     {
-        if (_isBoosting) yield break;
+        if (isBoosting) yield break;
     
-        _isBoosting = true;
-        float originalSpeed = _speedMax;
-        _speedMax += boostAmount;
+        isBoosting = true;
+        float originalSpeed = speedMax;
+        speedMax += boostAmount;
     
-        // Sauvegarde l'état original et force l'accélération
-        bool wasAccelerating = _isAccelerating;
-        _isAccelerating = true;
-        _accelerationLerpInterpolator = 1f; // Accélération immédiate
+        bool wasAccelerating = isAccelerating;
+        isAccelerating = true;
+        accelerationLerpInterpolator = 1f;
 
-        if (_boostParticles != null)
-            _boostParticles.Play();
+        if (boostParticles != null)
+            boostParticles.Play();
 
         if (!float.IsInfinity(duration))
         {
             yield return new WaitForSeconds(duration);
         
-            // Restauration
-            _speedMax = originalSpeed;
+            speedMax = originalSpeed;
+            isAccelerating = Input.GetKey(accelerateKey);
         
-            // Vérifie l'input actuel
-            bool isSpacePressed = Input.GetKey(KeyCode.Space);
-        
-            // Si le joueur n'appuie pas, désactive l'accélération
-            if (!isSpacePressed)
-            {
-                _isAccelerating = false;
-                _accelerationLerpInterpolator = 0f;
-            }
-            // Si le joueur appuie, garde l'accélération activée
-            else
-            {
-                _isAccelerating = true;
-            }
-        
-            if (_boostParticles != null)
-                _boostParticles.Stop();
+            if (boostParticles != null)
+                boostParticles.Stop();
             
-            _isBoosting = false;
+            isBoosting = false;
         }
     }
 
     private IEnumerator SpinEffect(float speedMultiplier, float duration, float rotationDegrees)
     {
-        _isSpinning = true;
-        float originalSpeed = _speedMax;
-        _speedMax *= speedMultiplier;
+        isSpinning = true;
+        float originalSpeed = speedMax;
+        speedMax *= speedMultiplier;
 
         float rotationSpeed = rotationDegrees / duration;
         float timer = 0f;
@@ -410,7 +393,7 @@ public class KartController : MonoBehaviour
             yield return null;
         }
 
-        _speedMax = originalSpeed;
-        _isSpinning = false;
+        speedMax = originalSpeed;
+        isSpinning = false;
     }
 }
