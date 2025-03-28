@@ -8,6 +8,7 @@ public class KartController : MonoBehaviour
     [SerializeField] private int playerNumber = 1; // 1 ou 2
 
     [Header("Checkpoint Settings")]
+    [SerializeField] private TextMeshProUGUI lapText;
     [SerializeField] private int currentCheckpoint = 0;
     [SerializeField] private int currentLap = 1;
     [SerializeField] private int totalLaps = 3;
@@ -109,12 +110,21 @@ public class KartController : MonoBehaviour
         currentLap++;
         currentCheckpoint = 0;
         Debug.Log($"Player {playerNumber} completed lap {currentLap}/{totalLaps}");
-    
+        UpdateLapDisplay();
+        
         if (currentLap > totalLaps)
         {
             FinishRace();
         }
     }
+    private void UpdateLapDisplay()
+    {
+        if (lapText != null)
+        {
+            lapText.text = $"Tour: {currentLap}/{totalLaps}";
+        }
+    }
+    
     private void FinishRace()
     {
         Debug.Log($"Player {playerNumber} has finished the race!");
@@ -131,6 +141,7 @@ public class KartController : MonoBehaviour
         }
         
         StartCoroutine(StartCountdown());
+        UpdateLapDisplay();
     }
 
     private IEnumerator StartCountdown()
