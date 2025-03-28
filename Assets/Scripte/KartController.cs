@@ -337,6 +337,7 @@ public class KartController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+
         if (other.CompareTag("Checkpoint"))
         {
             Checkpoint checkpoint = other.GetComponent<Checkpoint>();

@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Vert
   m_EditorClassIdentifier: 
   itemName: Vert
-  itemIcon: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+  itemIcon: {fileID: 21300000, guid: 29cc311795329264288de01aa3862c7c, type: 3}
   itemPrefab: {fileID: 6569349781057411975, guid: a118d20f287470c4e8f09e7aebd527c9, type: 3}
   itemDescription: 
