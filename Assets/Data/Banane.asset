@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Banane
   m_EditorClassIdentifier: 
   itemName: Banane
-  itemIcon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  itemIcon: {fileID: 21300000, guid: 695b31c49025f9649a019a1d3f418645, type: 3}
   itemPrefab: {fileID: 8050938192466950842, guid: 3cb30a87907587446a3dcc7eeb4aa872, type: 3}
   itemDescription: tkt

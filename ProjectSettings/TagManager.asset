@@ -17,6 +17,7 @@ TagManager:
   - BoostTerain
   - DamageTerain
   - Checkpoint
+  - Dirt
   layers:
   - Default
   - TransparentFX
