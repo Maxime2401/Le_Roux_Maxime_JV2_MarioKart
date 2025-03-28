@@ -368,13 +368,14 @@ public class KartController : MonoBehaviour
             yield return new WaitForSeconds(duration);
         
             speedMax = originalSpeed;
-            isAccelerating = Input.GetKey(accelerateKey);
+            
         
             if (boostParticles != null)
                 boostParticles.Stop();
             
             isBoosting = false;
         }
+        isAccelerating = Input.GetKey(accelerateKey);
     }
 
     private IEnumerator SpinEffect(float speedMultiplier, float duration, float rotationDegrees)
