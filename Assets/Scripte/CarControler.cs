@@ -7,6 +7,10 @@ public class KartController : MonoBehaviour
     [Header("Player Settings")]
     [SerializeField] private int playerNumber = 1; // 1 ou 2
 
+    [Header("Checkpoint Settings")]
+    [SerializeField] private int currentCheckpoint = 0;
+    [SerializeField] private int currentLap = 1;
+    [SerializeField] private int totalLaps = 3;
     [Header("Movement Settings")]
     [SerializeField] private Rigidbody rb;
     [SerializeField] private float speedMax = 3f;
@@ -79,6 +83,43 @@ public class KartController : MonoBehaviour
             accelerateKey = KeyCode.W;
             startKey = KeyCode.W;
         }
+    }
+    public void OnCheckpointReached(int checkpointNumber)
+    {
+    
+        if (checkpointNumber == currentCheckpoint + 1 || 
+            (currentCheckpoint >= RaceManager.Instance.TotalCheckpoints && checkpointNumber == 1))
+        {
+            currentCheckpoint = checkpointNumber;
+            Debug.Log($"Player {playerNumber} reached checkpoint {currentCheckpoint}");
+
+            // Gestion des tours complets
+            if (currentCheckpoint >= RaceManager.Instance.TotalCheckpoints)
+            {
+                CompleteLap();
+            }
+        }
+        else if (checkpointNumber != currentCheckpoint)
+        {
+        Debug.Log($"Player {playerNumber} took wrong checkpoint {checkpointNumber} (expected {currentCheckpoint + 1})");
+        }
+    }
+    private void CompleteLap()
+    {
+        currentLap++;
+        currentCheckpoint = 0;
+        Debug.Log($"Player {playerNumber} completed lap {currentLap}/{totalLaps}");
+    
+        if (currentLap > totalLaps)
+        {
+            FinishRace();
+        }
+    }
+    private void FinishRace()
+    {
+        Debug.Log($"Player {playerNumber} has finished the race!");
+        canMove = false; // Arrête le kart
+    
     }
 
     private void Start()
@@ -285,6 +326,14 @@ public class KartController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        if (other.CompareTag("Checkpoint"))
+        {
+            Checkpoint checkpoint = other.GetComponent<Checkpoint>();
+            if (checkpoint != null)
+            {
+                OnCheckpointReached(checkpoint.checkpointNumber);
+            }
+        }
         if (other.CompareTag("Boost"))
         {
             BoostObject boost = other.GetComponent<BoostObject>();
@@ -368,14 +417,13 @@ public class KartController : MonoBehaviour
             yield return new WaitForSeconds(duration);
         
             speedMax = originalSpeed;
-            
+            isAccelerating = Input.GetKey(accelerateKey);
         
             if (boostParticles != null)
                 boostParticles.Stop();
             
             isBoosting = false;
         }
-        isAccelerating = Input.GetKey(accelerateKey);
     }
 
     private IEnumerator SpinEffect(float speedMultiplier, float duration, float rotationDegrees)

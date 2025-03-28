@@ -1,12 +1,13 @@
 using UnityEngine;
+using System.Collections;
 
 public class RespawnObject : MonoBehaviour
 {
-    public GameObject objectPrefab;  // L'objet à faire apparaître/réapparaître
-    public Transform spawnPoint;     // Position de réapparition
-    public float respawnDelay = 10f; // Délai avant réapparition
+    public GameObject objectPrefab;
+    public Transform spawnPoint;
+    public float respawnDelay = 10f;
 
-    private GameObject currentInstance; // Instance actuelle de l'objet
+    private GameObject currentInstance;
 
     void Start()
     {
@@ -17,12 +18,9 @@ public class RespawnObject : MonoBehaviour
     {
         if (objectPrefab != null && spawnPoint != null)
         {
-            // Créer une nouvelle instance de l'objet
             currentInstance = Instantiate(objectPrefab, spawnPoint.position, spawnPoint.rotation);
-            
-            // Ajouter un détecteur de destruction
             var destroyDetector = currentInstance.AddComponent<DestroyDetector>();
-            destroyDetector.OnDestroyed += HandleObjectDestroyed;
+            destroyDetector.OnDestroyed += () => StartCoroutine(RespawnAfterDelay());
         }
         else
         {
@@ -30,14 +28,13 @@ public class RespawnObject : MonoBehaviour
         }
     }
 
-    void HandleObjectDestroyed()
+    private IEnumerator RespawnAfterDelay()
     {
-        // Planifier la réapparition après le délai
-        Invoke("SpawnObject", respawnDelay);
+        yield return new WaitForSeconds(respawnDelay);
+        SpawnObject(); // Réapparition après le délai
     }
 }
 
-// Script pour détecter la destruction
 public class DestroyDetector : MonoBehaviour
 {
     public delegate void DestroyedEvent();
