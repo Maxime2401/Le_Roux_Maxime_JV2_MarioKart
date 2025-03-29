@@ -6,9 +6,10 @@ public class DeplacementAB : MonoBehaviour
     public Transform pointB; // Point B
     public float speed = 2f; // Vitesse de déplacement
 
-    private Vector3 previousPosition; // Position précédente de la plateforme
-    private Rigidbody rb; // Rigidbody pour la gravité
-    private Transform playerTransform; // Transform du joueur
+    private Vector3 previousPosition;
+    private Rigidbody rb;
+    private bool wasAtPointA = false;
+    private bool wasAtPointB = false;
 
     void Start()
     {
@@ -18,23 +19,32 @@ public class DeplacementAB : MonoBehaviour
 
     void FixedUpdate()
     {
-        // Calculer la position interpolée entre A et B
         float t = Mathf.PingPong(Time.time * speed, 1f);
         Vector3 newPosition = Vector3.Lerp(pointA.position, pointB.position, t);
 
-        // Calculer le déplacement de la plateforme
-        Vector3 deltaPosition = newPosition - previousPosition;
-
-        // Déplacer l'objet vers la nouvelle position
-        rb.MovePosition(newPosition);
-
-        // Si le joueur est sur la plateforme, déplacer le joueur avec la plateforme
-        if (playerTransform != null)
+        // Vérifier si on arrive au point A
+        if (t < 0.01f && !wasAtPointA)
         {
-            playerTransform.position += deltaPosition;
+            FlipScaleY();
+            wasAtPointA = true;
+            wasAtPointB = false;
+        }
+        // Vérifier si on arrive au point B
+        else if (t > 0.99f && !wasAtPointB)
+        {
+            FlipScaleY();
+            wasAtPointB = true;
+            wasAtPointA = false;
         }
 
-        // Mettre à jour la position précédente de la plateforme
+        rb.MovePosition(newPosition);
         previousPosition = newPosition;
+    }
+
+    void FlipScaleY()
+    {
+        Vector3 newScale = transform.localScale;
+        newScale.z *= -1f;
+        transform.localScale = newScale;
     }
 }

@@ -8,6 +8,7 @@ public class KartController : MonoBehaviour
     [SerializeField] private int playerNumber = 1; // 1 ou 2
 
     [Header("Checkpoint Settings")]
+    [SerializeField] private TextMeshProUGUI positionText;
     [SerializeField] private TextMeshProUGUI lapText;
     [SerializeField] private int currentCheckpoint = 0;
     [SerializeField] private int currentLap = 1;
@@ -87,31 +88,28 @@ public class KartController : MonoBehaviour
     }
     public void OnCheckpointReached(int checkpointNumber)
     {
-    
-        if (checkpointNumber == currentCheckpoint + 1 || 
+        if (checkpointNumber == currentCheckpoint + 1 ||
             (currentCheckpoint >= RaceManager.Instance.TotalCheckpoints && checkpointNumber == 1))
         {
             currentCheckpoint = checkpointNumber;
-            Debug.Log($"Player {playerNumber} reached checkpoint {currentCheckpoint}");
+            RaceManager.Instance.UpdatePlayerProgress(playerNumber, currentCheckpoint, currentLap);
+            UpdatePositionDisplay();
 
-            // Gestion des tours complets
             if (currentCheckpoint >= RaceManager.Instance.TotalCheckpoints)
             {
                 CompleteLap();
             }
         }
-        else if (checkpointNumber != currentCheckpoint)
-        {
-        Debug.Log($"Player {playerNumber} took wrong checkpoint {checkpointNumber} (expected {currentCheckpoint + 1})");
-        }
     }
+
     private void CompleteLap()
     {
         currentLap++;
         currentCheckpoint = 0;
-        Debug.Log($"Player {playerNumber} completed lap {currentLap}/{totalLaps}");
+        RaceManager.Instance.UpdatePlayerProgress(playerNumber, currentCheckpoint, currentLap);
         UpdateLapDisplay();
-        
+        UpdatePositionDisplay();
+
         if (currentLap > totalLaps)
         {
             FinishRace();
@@ -124,7 +122,26 @@ public class KartController : MonoBehaviour
             lapText.text = $"Tour: {currentLap}/{totalLaps}";
         }
     }
-    
+    private void UpdatePositionDisplay()
+    {
+        if (positionText != null)
+        {
+            int position = RaceManager.Instance.GetPlayerPosition(playerNumber);
+            positionText.text = GetPositionString(position);
+        }
+    }
+
+    private string GetPositionString(int position)
+    {
+        switch (position)
+        {
+            case 1: return "1er";
+            case 2: return "2ème";
+            case 3: return "3ème";
+            case 4: return "4ème";
+            default: return position.ToString();
+        }
+    }
     private void FinishRace()
     {
         Debug.Log($"Player {playerNumber} has finished the race!");
