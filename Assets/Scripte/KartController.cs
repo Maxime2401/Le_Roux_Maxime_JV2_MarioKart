@@ -35,7 +35,7 @@ public class KartController : MonoBehaviour
     [SerializeField] private float normalBoostAmount = 10f;
     [SerializeField] private float superBoostAmount = 15f;
     [SerializeField] private float boostDuration = 2f;
-    [SerializeField] private ParticleSystem boostParticles;
+    [SerializeField] private GameObject boostParticles;
     private bool isBoosting;
 
     [Header("Ground Detection Settings")]
@@ -522,7 +522,7 @@ public class KartController : MonoBehaviour
         accelerationLerpInterpolator = 1f;
 
         if (boostParticles != null)
-            boostParticles.Play();
+            boostParticles.SetActive(true);
 
         if (!float.IsInfinity(duration))
         {
@@ -532,8 +532,8 @@ public class KartController : MonoBehaviour
             isAccelerating = Input.GetKey(accelerateKey);
         
             if (boostParticles != null)
-                boostParticles.Stop();
-            
+                boostParticles.SetActive(false);
+
             isBoosting = false;
         }
     }
