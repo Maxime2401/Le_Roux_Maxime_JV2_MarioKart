@@ -7601,6 +7601,11 @@ MonoBehaviour:
   rearSpawnPoint: {fileID: 1881009795}
   forwardSpawnPoint: {fileID: 401591451}
   shellForce: 191.9
+--- !u!23 &782121091 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 6496664548022959294, guid: 21b135b76b015c64ba7861bc5bd17737, type: 3}
+  m_PrefabInstance: {fileID: 1662795723}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &784553541 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 805fb851e5035f749b8f5364311b9019, type: 3}
@@ -13453,6 +13458,11 @@ MonoBehaviour:
   rearSpawnPoint: {fileID: 335790176}
   forwardSpawnPoint: {fileID: 226153997}
   shellForce: 191.9
+--- !u!23 &1437600214 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 6496664548022959294, guid: 21b135b76b015c64ba7861bc5bd17737, type: 3}
+  m_PrefabInstance: {fileID: 1575065149}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1450843000
 GameObject:
   m_ObjectHideFlags: 0
@@ -14886,6 +14896,14 @@ PrefabInstance:
       value: 0.43
       objectReference: {fileID: 0}
     - target: {fileID: 5154867698380960564, guid: 21b135b76b015c64ba7861bc5bd17737, type: 3}
+      propertyPath: kartRenderers.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5154867698380960564, guid: 21b135b76b015c64ba7861bc5bd17737, type: 3}
+      propertyPath: kartRenderers.Array.data[0]
+      value: 
+      objectReference: {fileID: 1437600214}
+    - target: {fileID: 5154867698380960564, guid: 21b135b76b015c64ba7861bc5bd17737, type: 3}
       propertyPath: accelerationCurve.m_Curve.Array.size
       value: 2
       objectReference: {fileID: 0}
@@ -15853,6 +15871,14 @@ PrefabInstance:
       value: 0.43
       objectReference: {fileID: 0}
     - target: {fileID: 5154867698380960564, guid: 21b135b76b015c64ba7861bc5bd17737, type: 3}
+      propertyPath: kartRenderers.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5154867698380960564, guid: 21b135b76b015c64ba7861bc5bd17737, type: 3}
+      propertyPath: kartRenderers.Array.data[0]
+      value: 
+      objectReference: {fileID: 782121091}
+    - target: {fileID: 5154867698380960564, guid: 21b135b76b015c64ba7861bc5bd17737, type: 3}
       propertyPath: accelerationCurve.m_Curve.Array.size
       value: 2
       objectReference: {fileID: 0}
@@ -15948,7 +15974,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 7545618492472839378, guid: 21b135b76b015c64ba7861bc5bd17737, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:

@@ -15,6 +15,10 @@ public class KartController : MonoBehaviour
     [SerializeField] private int currentLap = 1;
     [SerializeField] private int totalLaps = 3;
     [Header("Respawn Settings")]
+    [SerializeField] private float invincibilityDuration = 3f;
+    [SerializeField] private float blinkInterval = 0.2f;
+    [SerializeField] private Renderer[] kartRenderers; // Assignez tous les renderers du kart
+    private bool isInvincible = false;
     [SerializeField] private float fallHeight = -10f; // Si le joueur tombe sous cette hauteur
     [SerializeField] private float respawnHeight = 2f; // Hauteur de réapparition
     [SerializeField] private float respawnDelay = 1f; // Délai avant réapparition
@@ -115,7 +119,13 @@ public class KartController : MonoBehaviour
             }
         }
     }
-
+    public void ActivateInvincibility()
+    {
+        if (!isInvincible)
+        {
+            StartCoroutine(InvincibilityCoroutine());
+        }
+    }
     private void CompleteLap()
     {
         currentLap++;
@@ -173,6 +183,37 @@ public class KartController : MonoBehaviour
         
         StartCoroutine(StartCountdown());
         UpdateLapDisplay();
+    }
+
+    private IEnumerator InvincibilityCoroutine()
+    {
+        isInvincible = true;
+        
+
+        float timer = 0f;
+        bool visibleState = true;
+
+        while (timer < invincibilityDuration)
+        {
+            // Alterne la visibilité des renderers
+            foreach (Renderer renderer in kartRenderers)
+            {
+                renderer.enabled = visibleState;
+            }
+
+            visibleState = !visibleState;
+            timer += blinkInterval;
+            yield return new WaitForSeconds(blinkInterval);
+        }
+
+        // S'assurer que les renderers sont réactivés à la fin
+        foreach (Renderer renderer in kartRenderers)
+        {
+            renderer.enabled = true;
+        }
+
+        isInvincible = false;
+
     }
 
     private IEnumerator StartCountdown()
@@ -475,7 +516,7 @@ public class KartController : MonoBehaviour
         else
         {
             DamageObject damage = other.GetComponent<DamageObject>();
-            if (damage != null)
+            if (damage != null && !isInvincible)
             {
                 ApplyDamageEffect(damage.damageType, damage.slowdownDuration);
                 if (!other.CompareTag("DamageTerain"))
@@ -554,6 +595,7 @@ public class KartController : MonoBehaviour
 
     private IEnumerator SpinEffect(float speedMultiplier, float duration, float rotationDegrees)
     {
+        StartCoroutine(InvincibilityCoroutine());
         isSpinning = true;
         float originalSpeed = speedMax;
         speedMax *= speedMultiplier;
