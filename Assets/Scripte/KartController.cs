@@ -14,14 +14,14 @@ public class KartController : MonoBehaviour
     [SerializeField] private int currentLap = 1;
     [SerializeField] private int totalLaps = 3;
     [Header("Respawn Settings")]
-[SerializeField] private float fallHeight = -10f; // Si le joueur tombe sous cette hauteur
-[SerializeField] private float respawnHeight = 2f; // Hauteur de réapparition
-[SerializeField] private float respawnDelay = 1f; // Délai avant réapparition
-[SerializeField] private ParticleSystem respawnParticles; // Effet visuel (optionnel)
-[SerializeField] private AudioClip deathSound; // Son de mort (optionnel)
+    [SerializeField] private float fallHeight = -10f; // Si le joueur tombe sous cette hauteur
+    [SerializeField] private float respawnHeight = 2f; // Hauteur de réapparition
+    [SerializeField] private float respawnDelay = 1f; // Délai avant réapparition
+    [SerializeField] private ParticleSystem respawnParticles; // Effet visuel (optionnel)
+    [SerializeField] private AudioClip deathSound; // Son de mort (optionnel)
 
-private Vector3 lastCheckpointPosition;
-private Quaternion lastCheckpointRotation;
+    private Vector3 lastCheckpointPosition;
+    private Quaternion lastCheckpointRotation;
     [Header("Movement Settings")]
     [SerializeField] private Rigidbody rb;
     [SerializeField] private float speedMax = 3f;
@@ -29,6 +29,7 @@ private Quaternion lastCheckpointRotation;
     [SerializeField] private float rotationSpeed = 0.5f;
     [SerializeField] private AnimationCurve accelerationCurve;
     [SerializeField] private bool canMove = true;
+    [SerializeField] private KeyCode resetSpeedKey = KeyCode.P;
 
     [Header("Boost Settings")]
     [SerializeField] private float normalBoostAmount = 10f;
@@ -220,6 +221,10 @@ private Quaternion lastCheckpointRotation;
 
     private void Update()
     {
+        if (Input.GetKeyDown(resetSpeedKey))
+        {
+            ResetSpeed();
+        }
         if (transform.position.y < fallHeight)
         {
             Respawn();
@@ -277,7 +282,14 @@ private Quaternion lastCheckpointRotation;
         if (isSpinning) return;
         StartCoroutine(RespawnCoroutine());
     }
-
+    private void ResetSpeed()
+    {
+        speed = 0f;
+        accelerationLerpInterpolator = 0f;
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        Debug.Log($"Vitesse réinitialisée pour le joueur {playerNumber}");
+    }
     private IEnumerator RespawnCoroutine()
     {
         // Désactive les contrôles
@@ -544,5 +556,6 @@ private Quaternion lastCheckpointRotation;
 
         speedMax = originalSpeed;
         isSpinning = false;
+        ResetSpeed();
     }
 }
