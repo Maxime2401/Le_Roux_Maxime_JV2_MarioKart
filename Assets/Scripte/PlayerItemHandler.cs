@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
-
+using System.Collections;
 public class PlayerItemHandler : MonoBehaviour
 {
     [Header("Player Settings")]
@@ -11,12 +11,15 @@ public class PlayerItemHandler : MonoBehaviour
     [SerializeField] private Image itemIconUI;
     
     [Header("Item Settings")]
+    [SerializeField] private GameObject MushPrefab;
     [SerializeField] private GameObject bananaPrefab;
     [SerializeField] private GameObject greenShellPrefab;
     [SerializeField] private Transform rearSpawnPoint;
     [SerializeField] private Transform forwardSpawnPoint;
     [SerializeField] private float shellForce = 50f;
-
+    [SerializeField] private GameObject bloupEffectPlayer1; // Effet pour le joueur 1
+    [SerializeField] private GameObject bloupEffectPlayer2; // Effet pour le joueur 2
+    [SerializeField] private float bloupDuration = 5f;
     private ObjectData currentItem;
 
     private void Awake()
@@ -67,12 +70,37 @@ public class PlayerItemHandler : MonoBehaviour
             case "Vert":
                 ThrowGreenShell();
                 break;
-            case "bombe":
-                // Implémentez la bombe ici
+            case "Bloup":
+                SpawnBlop();
                 break;
+            case "Mushrum":
+                ApplyMush();
+                break;
+
         }
     }
+    private void SpawnBlop()
+    {
+        GameObject bloupEffect = playerNumber == 1 ? bloupEffectPlayer1 : bloupEffectPlayer2;
 
+        if (bloupEffect != null)
+        {
+            StartCoroutine(ActivateBloupEffect(bloupEffect));
+        }
+    }
+    private void ApplyMush()
+    {
+        if (MushPrefab == null || forwardSpawnPoint == null) return;
+
+        GameObject mush = Instantiate(MushPrefab, forwardSpawnPoint.position, forwardSpawnPoint.rotation);
+        
+    }
+    private IEnumerator ActivateBloupEffect(GameObject effect)
+    {
+        effect.SetActive(true);
+        yield return new WaitForSeconds(bloupDuration);
+        effect.SetActive(false);
+    }
     private void SpawnBanana()
     {
         if (bananaPrefab != null && rearSpawnPoint != null)
