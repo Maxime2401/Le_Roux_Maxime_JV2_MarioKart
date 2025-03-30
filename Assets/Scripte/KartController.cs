@@ -172,7 +172,6 @@ public class KartController : MonoBehaviour
     }
     private void FinishRace()
     {
-        Debug.Log($"Player {playerNumber} has finished the race!");
         canMove = false;
 
         // Active l'écran de fin
@@ -347,7 +346,7 @@ public class KartController : MonoBehaviour
         accelerationLerpInterpolator = 0f;
         rb.velocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
-        Debug.Log($"Vitesse réinitialisée pour le joueur {playerNumber}");
+        
     }
     private IEnumerator RespawnCoroutine()
     {
