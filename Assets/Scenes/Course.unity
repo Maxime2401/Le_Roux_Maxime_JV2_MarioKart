@@ -8048,8 +8048,8 @@ MonoBehaviour:
   rearSpawnPoint: {fileID: 1881009795}
   forwardSpawnPoint: {fileID: 401591451}
   shellForce: 191.9
-  bloupEffectPlayer1: {fileID: 2102357372}
-  bloupEffectPlayer2: {fileID: 1314394726}
+  bloupEffectPlayer1: {fileID: 1314394726}
+  bloupEffectPlayer2: {fileID: 2102357372}
   bloupDuration: 3.88
 --- !u!23 &782121091 stripped
 MeshRenderer:
@@ -12939,10 +12939,10 @@ RectTransform:
   - {fileID: 1575916587}
   m_Father: {fileID: 1319901399}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 242, y: 3}
-  m_SizeDelta: {x: 97, y: 100}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 3, y: 3}
+  m_SizeDelta: {x: -393, y: -414}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1314394728
 MonoBehaviour:
@@ -20905,10 +20905,10 @@ RectTransform:
   - {fileID: 925373117}
   m_Father: {fileID: 1319901399}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 225, y: 3}
-  m_SizeDelta: {x: 101, y: 100}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 51.5, y: 3}
+  m_SizeDelta: {x: -392, y: -414}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &2104953327
 GameObject:
