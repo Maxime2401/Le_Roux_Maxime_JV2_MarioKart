@@ -7,6 +7,7 @@ public class KartController : MonoBehaviour
     [Header("Player Settings")]
     [SerializeField] private int playerNumber = 1; // 1 ou 2
 
+
     [Header("Checkpoint Settings")]
     [SerializeField] private TextMeshProUGUI positionText;
     [SerializeField] private TextMeshProUGUI lapText;
@@ -320,6 +321,7 @@ public class KartController : MonoBehaviour
         yield return new WaitForSeconds(respawnDelay / 2);
 
         // Réactive les contrôles
+        ResetSpeed();
         canMove = true;
     }
 
@@ -346,7 +348,6 @@ public class KartController : MonoBehaviour
             countdownText.text = "DÉPART!";
         }
     }
-
     private void HandleRotation()
     {
         float horizontal = Input.GetAxis(horizontalInput);
@@ -420,7 +421,20 @@ public class KartController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        if (other.CompareTag("Wall"))
+        {
+            ResetSpeed();
 
+            // Calcul de la direction (centre du mur vers le joueur)
+            Vector3 pushBackDirection = transform.position - other.transform.position;
+            pushBackDirection.y = 0; // On ignore la composante Y si besoin
+            pushBackDirection.Normalize(); // Normalise pour avoir une direction pure
+
+            // Force de recul
+            float pushBackForce = 10f;
+            rb.AddForce(pushBackDirection * pushBackForce, ForceMode.Impulse);
+
+        }
         if (other.CompareTag("Death"))
         {
             Respawn();

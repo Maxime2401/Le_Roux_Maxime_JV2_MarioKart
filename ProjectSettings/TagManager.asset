@@ -18,6 +18,7 @@ TagManager:
   - DamageTerain
   - Checkpoint
   - Dirt
+  - Wall
   layers:
   - Default
   - TransparentFX
