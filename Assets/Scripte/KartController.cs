@@ -13,6 +13,15 @@ public class KartController : MonoBehaviour
     [SerializeField] private int currentCheckpoint = 0;
     [SerializeField] private int currentLap = 1;
     [SerializeField] private int totalLaps = 3;
+    [Header("Respawn Settings")]
+[SerializeField] private float fallHeight = -10f; // Si le joueur tombe sous cette hauteur
+[SerializeField] private float respawnHeight = 2f; // Hauteur de réapparition
+[SerializeField] private float respawnDelay = 1f; // Délai avant réapparition
+[SerializeField] private ParticleSystem respawnParticles; // Effet visuel (optionnel)
+[SerializeField] private AudioClip deathSound; // Son de mort (optionnel)
+
+private Vector3 lastCheckpointPosition;
+private Quaternion lastCheckpointRotation;
     [Header("Movement Settings")]
     [SerializeField] private Rigidbody rb;
     [SerializeField] private float speedMax = 3f;
@@ -86,12 +95,15 @@ public class KartController : MonoBehaviour
             startKey = KeyCode.W;
         }
     }
-    public void OnCheckpointReached(int checkpointNumber)
+    public void OnCheckpointReached(int checkpointNumber, Vector3 position, Quaternion rotation)
     {
         if (checkpointNumber == currentCheckpoint + 1 ||
             (currentCheckpoint >= RaceManager.Instance.TotalCheckpoints && checkpointNumber == 1))
         {
             currentCheckpoint = checkpointNumber;
+            lastCheckpointPosition = position;
+            lastCheckpointRotation = rotation;
+
             RaceManager.Instance.UpdatePlayerProgress(playerNumber, currentCheckpoint, currentLap);
             UpdatePositionDisplay();
 
@@ -208,6 +220,10 @@ public class KartController : MonoBehaviour
 
     private void Update()
     {
+        if (transform.position.y < fallHeight)
+        {
+            Respawn();
+        }
         if (!canMove)
         {
             HandleStartInput();
@@ -255,6 +271,44 @@ public class KartController : MonoBehaviour
         {
             holdProgressText.color = Color.white;
         }
+    }
+    private void Respawn()
+    {
+        if (isSpinning) return;
+        StartCoroutine(RespawnCoroutine());
+    }
+
+    private IEnumerator RespawnCoroutine()
+    {
+        // Désactive les contrôles
+        canMove = false;
+
+        // Joue un son (optionnel)
+        if (deathSound != null)
+            AudioSource.PlayClipAtPoint(deathSound, transform.position);
+
+        // Effet visuel avant disparition (optionnel)
+        if (respawnParticles != null)
+            respawnParticles.Play();
+
+        yield return new WaitForSeconds(respawnDelay / 2);
+
+        // Réinitialise la physique
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+
+        // Téléportation au checkpoint
+        transform.position = lastCheckpointPosition + Vector3.up * respawnHeight;
+        transform.rotation = lastCheckpointRotation;
+
+        // Effet visuel après réapparition (optionnel)
+        if (respawnParticles != null)
+            respawnParticles.Play();
+
+        yield return new WaitForSeconds(respawnDelay / 2);
+
+        // Réactive les contrôles
+        canMove = true;
     }
 
     private void EvaluateHoldDuration()
@@ -355,13 +409,25 @@ public class KartController : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
 
+        if (other.CompareTag("Death"))
+        {
+            Respawn();
+            return;
+        }
+
+        // Checkpoint
         if (other.CompareTag("Checkpoint"))
         {
             Checkpoint checkpoint = other.GetComponent<Checkpoint>();
-            if (checkpoint != null)
+            if (checkpoint != null && checkpoint.respawnPoint != null)
             {
-                OnCheckpointReached(checkpoint.checkpointNumber);
+                OnCheckpointReached(
+                    checkpoint.checkpointNumber,
+                    checkpoint.respawnPoint.position,
+                    checkpoint.respawnPoint.rotation
+                );
             }
+            return;
         }
         if (other.CompareTag("Boost"))
         {
@@ -425,7 +491,12 @@ public class KartController : MonoBehaviour
                 break;
         }
     }
-
+    public void SetLastCheckpoint(Vector3 position, Quaternion rotation)
+    {
+        lastCheckpointPosition = position;
+        lastCheckpointRotation = rotation;
+        Debug.Log($"Player {playerNumber} saved checkpoint at {position}");
+    }
     public IEnumerator Boost(float boostAmount, float duration)
     {
         if (isBoosting) yield break;
