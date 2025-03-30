@@ -14,6 +14,10 @@ public class KartController : MonoBehaviour
     [SerializeField] private int currentCheckpoint = 0;
     [SerializeField] private int currentLap = 1;
     [SerializeField] private int totalLaps = 3;
+    [Header("Race End Settings")]
+    [SerializeField] private GameObject raceEndCanvas;
+    [SerializeField] private TextMeshProUGUI winnerText;
+    [SerializeField] private AudioClip victorySound;
     [Header("Respawn Settings")]
     [SerializeField] private float invincibilityDuration = 3f;
     [SerializeField] private float blinkInterval = 0.2f;
@@ -143,7 +147,7 @@ public class KartController : MonoBehaviour
     {
         if (lapText != null)
         {
-            lapText.text = $"Tour: {currentLap}/{totalLaps}";
+            lapText.text = $"Tour: {currentLap}/{totalLaps+1}";
         }
     }
     private void UpdatePositionDisplay()
@@ -169,8 +173,21 @@ public class KartController : MonoBehaviour
     private void FinishRace()
     {
         Debug.Log($"Player {playerNumber} has finished the race!");
-        canMove = false; // Arrête le kart
-    
+        canMove = false;
+
+        // Active l'écran de fin
+        if (raceEndCanvas != null)
+        {
+            raceEndCanvas.SetActive(true);
+            winnerText.text = $"JOUEUR {playerNumber} A GAGNÉ !";
+
+            // Joue le son de victoire
+            if (victorySound != null)
+                AudioSource.PlayClipAtPoint(victorySound, Camera.main.transform.position);
+        }
+
+        // Optionnel : Arrête le temps du jeu
+        Time.timeScale = 0f;
     }
 
     private void Start()
